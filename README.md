@@ -3,6 +3,12 @@
 
 lunar-calendar 可以自动生成按农历重复的事件，并导出 iCal 文件。
 
+## 安装
+
+```
+$ npm install lcal -g
+```
+
 ## 用法
 
 ```
