@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+
+var fs = require("fs");
+var path = require("path");
+var lcal = require("../index");
+var commander = require('commander');
+var icalendar = require("icalendar");
+var lunar = require("lunar-calendar");
+// in package.json:
+//  dependencies
+//    "chinese-lunar": "^0.1.1",
+//
+//var lunar = require("chinese-lunar");
+
+commander
+  .version(require('../package').version)
+  .usage('[options]')
+  .option('-s, --src', 'markdown source file for generate lunar calendar.')
+  .option('-d, --dist', 'ical file dist dir.')
+  .parse(process.argv);
+
+var cwd = process.cwd();
+var fileName = commander.src || commander.args[0] || "";
+var filePath = path.join(cwd, fileName);
+var distFile = fileName.split(".");
+distFile.pop();
+distFile = commander.dist || distFile.join(".") + ".ics";
+
+if (!fs.existsSync(filePath)) {
+  process.exit();
+}
+
+var events = markdown2options( fs.readFileSync(filePath, {encoding: "utf-8"}) );
+var ical = new icalendar.iCalendar();
+
+for(var i=0,l=events.length; i<l; i++){
+  for (var j=0; j<=events[i].duration; j++) {
+
+    var year = events[i].start.year;
+    var month = events[i].start.month;
+    var date = events[i].start.date;
+
+    switch (events[i].durationUnit) {
+    case "Y":
+      year = year + j;
+      break;
+    case "M":
+    case "D":
+    default:
+      // TODO: LunarDate.add(1, "M");
+      // TODO: LunarDate.add(1, "D");
+      continue;
+      break;
+    }
+    var cal = lunar.lunarToSolar(year, month, date);
+    var event = ical.addComponent('VEVENT');
+    event.setSummary(events[i].description);
+    // ALL-DAY EVENT.
+    event.addProperty('DTSTART', new Date(cal.year, cal.month - 1, cal.day, 0,0,0), {VALUE: 'DATE'});
+    // DATE-TIME EVENT
+    //event.setDate(new Date(cal.year, cal.month - 1, cal.day, 0,0,0), 24*60*60);
+
+    //event.setDate(cal, 24*60*60);
+
+  }
+}
+
+var icalData = ical.toString();
+fs.writeFileSync(distFile, icalData);
+
+function markdown2options(markdown){
+
+  //                                year        month         date       duration   unit   description
+  var RE_EVENT_DURATION = /^[\*\-]\s+(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\+(\d+)([YMDhms])\s+(.*)/;
+  //                              start-year  start-month   start-date end-year    end-month     end-date    description
+  var RE_EVENT_POINTS = /^[*\-]\s+(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\~(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\s+(.*)/;
+
+  var eventLines = markdown.split(/\r\n|\r|\n/);
+  var events = [];
+
+  for(var i=0,l=eventLines.length; i<l; i++){
+    var line = eventLines[i];
+    var match;
+
+    if (match = line.match(RE_EVENT_DURATION)) {
+
+      var startYear = parseInt(match[1], 10);
+      var startMonth = parseInt(match[2], 10);
+      var startDate = parseInt(match[3], 10);
+      var duration = parseInt(match[4], 10);
+      var durationUnit = match[5];
+      var description = match[6];
+      var endYear = startYear;
+      var endMonth = startMonth;
+      var endDate = startDate;
+
+      switch(durationUnit){
+      case 'Y':
+        endYear = startYear + duration;
+        break;
+      case 'M':
+        endMonth = startYear + duration;
+      case 'D':
+        endDate = startDate + duration;
+      default:
+        // code
+      }
+      events.push({
+        start: {
+          year: startYear,
+          month: startMonth,
+          date: startDate,
+          value: startYear + "-" + startMonth + "-" + startDate
+        },
+        end: {
+          year: endYear,
+          month: endMonth,
+          date: endDate
+        },
+        duration: duration,
+        durationUnit: durationUnit,
+        description: description
+      });
+
+    } else if (match = line.match(RE_EVENT_POINTS)) {
+
+      // TODO
+
+    }
+
+  }
+
+  return events;
+}
+
+// vim:ft=javascript
