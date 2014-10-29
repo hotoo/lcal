@@ -39,6 +39,7 @@ for(var i=0,l=events.length; i<l; i++){
     var year = events[i].start.year;
     var month = events[i].start.month;
     var date = events[i].start.date;
+    var description = events[i].description;
 
     switch (events[i].durationUnit) {
     case "Y":
@@ -53,8 +54,12 @@ for(var i=0,l=events.length; i<l; i++){
       break;
     }
     var cal = lunar.lunarToSolar(year, month, date);
+    if (!cal || cal.error){
+      console.error(description, year, month, date, cal);
+      continue;
+    }
     var event = ical.addComponent('VEVENT');
-    event.setSummary(events[i].description);
+    event.setSummary(description);
     // ALL-DAY EVENT.
     event.addProperty('DTSTART', new Date(cal.year, cal.month - 1, cal.day, 0,0,0), {VALUE: 'DATE'});
     // DATE-TIME EVENT
