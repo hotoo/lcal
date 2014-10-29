@@ -78,7 +78,7 @@ function markdown2options(markdown){
   //                                year        month         date       duration   unit   description
   var RE_EVENT_DURATION = /^[\*\-]\s+(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\+(\d+)([YMDhms])\s+(.*)/;
   //                              start-year  start-month   start-date end-year    end-month     end-date    description
-  var RE_EVENT_POINTS = /^[*\-]\s+(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\~(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\s+(.*)/;
+  var RE_EVENT_POINTS = /^[*\-]\s+(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\~(\d{4})[/\-](\d{1,2})[/\-](\d{1,2}):[YMDhms]\s+(.*)/;
 
   var eventLines = markdown.split(/\r\n|\r|\n/);
   var events = [];
@@ -130,7 +130,10 @@ function markdown2options(markdown){
     } else if (match = line.match(RE_EVENT_POINTS)) {
 
       // TODO
+      console.warn(line, "{error: '暂不支持这个事件定义' }")
 
+    } else if (line) {
+      console.error(line, "{error: '不支持这个事件定义' }")
     }
 
   }
