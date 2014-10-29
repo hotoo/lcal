@@ -5,12 +5,7 @@ var path = require("path");
 var lcal = require("../index");
 var commander = require('commander');
 var icalendar = require("icalendar");
-var lunar = require("lunar-calendar");
-// in package.json:
-//  dependencies
-//    "chinese-lunar": "^0.1.1",
-//
-//var lunar = require("chinese-lunar");
+var lunar = require("chinese-lunar");
 
 commander
   .version(require('../package').version)
@@ -25,6 +20,7 @@ var filePath = path.join(cwd, fileName);
 var distFile = fileName.split(".");
 distFile.pop();
 distFile = commander.dist || distFile.join(".") + ".ics";
+
 
 if (!fs.existsSync(filePath)) {
   process.exit();
@@ -53,19 +49,32 @@ for(var i=0,l=events.length; i<l; i++){
       continue;
       break;
     }
-    var cal = lunar.lunarToSolar(year, month, date);
-    if (!cal || cal.error){
+    try {
+      var cal = lunar.lunarToSolar(year, month, date);
+
+      var event = ical.addComponent('VEVENT');
+      event.setSummary(description);
+      // ALL-DAY EVENT.
+      //event.addProperty('DTSTART', new Date(cal.year, cal.month - 1, cal.day, 0,0,0), {VALUE: 'DATE'});
+      event.addProperty('DTSTART', cal, {VALUE: 'DATE'});
+
+      // DATE-TIME EVENT
+      //event.setDate(new Date(cal.year, cal.month - 1, cal.day, 0,0,0), 24*60*60);
+      //event.setDate(cal, 24*60*60);
+    } catch (ex) {
+
       console.error(description, year, month, date, cal);
       continue;
-    }
-    var event = ical.addComponent('VEVENT');
-    event.setSummary(description);
-    // ALL-DAY EVENT.
-    event.addProperty('DTSTART', new Date(cal.year, cal.month - 1, cal.day, 0,0,0), {VALUE: 'DATE'});
-    // DATE-TIME EVENT
-    //event.setDate(new Date(cal.year, cal.month - 1, cal.day, 0,0,0), 24*60*60);
 
-    //event.setDate(cal, 24*60*60);
+    }
+
+    var calLeap = lunar.lunarToSolar(year, month, date, true);
+
+    if (calLeap - cal > 0) {
+      var event = ical.addComponent('VEVENT');
+      event.setSummary("闰：" + description);
+      event.addProperty('DTSTART', calLeap, {VALUE: 'DATE'});
+    }
 
   }
 }

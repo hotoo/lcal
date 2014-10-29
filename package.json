@@ -8,9 +8,9 @@
     "luncal": "bin/lcal"
   },
   "dependencies": {
+    "chinese-lunar": "^0.1.1",
     "commander": "^2.5.0",
-    "icalendar": "^0.7.1",
-    "lunar-calendar": "^0.1.4"
+    "icalendar": "^0.7.1"
   },
   "scripts": {
     "test": "make test"
