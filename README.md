@@ -3,7 +3,7 @@
 
 lunar-calendar 可以自动生成按农历重复的事件，并导出 iCal 文件。
 
-![snapshot](https://t.alipayobjects.com/images/T1J7NcXXFBXXXXXXXX.png)
+![snapshot](./snapshot.png)
 
 ## 安装
 
